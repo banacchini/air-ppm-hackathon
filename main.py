@@ -1,3 +1,44 @@
+"""
+pm10_forecaster.py
+
+This script reads a JSON input file containing a list of cases and, for each case,
+generates a synthetic hourly PM10 forecast at the case’s target location.
+
+Input JSON schema:
+{
+  "cases": [
+    {
+      "case_id":        string,
+      "stations": [     # list of station objects
+        {
+          "station_code": string,
+          "longitude":    float,
+          "latitude":     float,
+          "history": [    # list of hourly observations
+            {
+              "timestamp": str (ISO8601, e.g. "2019-01-01T00:00:00"),
+              "pm10":       float
+            },
+            ...
+          ]
+        },
+        ...
+      ],
+      "target": {
+        "longitude":               float,
+        "latitude":                float,
+        "prediction_start_time":   str (ISO8601)
+      },
+      "weather": [ ... ]  # optional array of METAR‐style records
+    },
+    ...
+  ]
+}
+
+Usage:
+    python pm10_forecaster.py --data-file data.json [--landuse-pbf landuse.pbf] --output-file output.json
+"""
+
 import argparse  # For parsing command-line arguments
 import json      # For reading and writing JSON files
 import random    # For generating random numbers (placeholder for real predictions)
@@ -53,6 +94,7 @@ def predict_pm10(base_time, history, landuse_data, hours=24):
     for h in range(hours):
         ts = (base_time + timedelta(hours=h)).strftime("%Y-%m-%dT%H:%MZ")
         # Generate a random PM10 value between 0 and 100 (put your logic here)
+        # TODO: replace this random placeholder with your PM10 prediction model
         pm10_pred = round(random.uniform(0, 100), 1)
         forecast_list.append({
             "timestamp": ts,
