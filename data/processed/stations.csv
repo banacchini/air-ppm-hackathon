@@ -1,0 +1,8 @@
+station_code,int_code,address,area_type,station_category,latitude,longitude
+MpKrakAlKras,PL0012A,"Kraków, Aleja Krasińskiego",urban,stationary container unit,50.057678,19.926189
+MpKrakBujaka,PL0501A,"Kraków, ul. Bujaka",urban,stationary container unit,50.010575,19.949189
+MpKrakBulwar,PL0039A,"Kraków, ul. Bulwarowa",urban,stationary container unit,50.069308,20.053492
+MpKrakOsPias,PL0642A,"Kraków, os. Piastów",urban,free-standing dust sampler,50.098508,20.018269
+MpKrakSwoszo,PL0735A,"Kraków, os. Swoszowice",urban,free-standing dust sampler,49.991442,19.936792
+MpKrakWadow,PL0670A,"Kraków, os. Wadów",urban,stationary container unit,50.100569,20.122561
+MpKrakZloRog,PL0643A,"Kraków, ul. Złoty Róg",urban,free-standing dust sampler,50.081197,19.895358
