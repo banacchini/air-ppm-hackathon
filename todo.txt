@@ -1,0 +1,26 @@
+WEATHER:
+- handling reszty compound fields
+    - najważniejsze - te w których jest najmniej missing values (np. MA1) + te, które wymienił w https://www.airppm.org/for-participants/training-sets
+    - czyli spróbujcie rozkminić MA1, GF1, GA1, GE1
+        -jak będziecie w gazie to może MD1, MW1 i GA2, ale mają sporo missing values, więc pewnie można je wywalić i nie stracimy na tym dużo
+
+- WAŻNE!!!! - po ogarnięciu wszystkich kolumn
+    - niektóre godziny mają parę reportów (FM-15 i FM-12)
+        -końcowo będziemy wklejać tylko 1 report godzinowy, dlatego trzeba przygotować algorytm, który:
+            -sprawdza czy dla godziny jest dostępny raport pogodowy FM-15
+                -jeśli mamy ten raport to sprawdza czy brakujące pola można wziąć z raportu FM-12 (jeśli taki jest dla tej godziny)
+                -uzupełnia brakujące pola na podstawie tego drugiego raportu
+            -co jeśli dla godziny nie ma raportu?
+                -opcja 1 - NaN, tree-based algorytmy sobie poradza, gorzej z NN i Prophetem
+                -opcja 2 - MEGA PRZYDATNE, ALE TROCHE ZABAWY
+                    -usredniamy sytuacje pogodowa z poprzedniej dostepnej godziny i nastepnej dostepnej godziny
+                        -dzieje sie mega syf jak brakuje paru godzin z rzedu - staty beda wziete z kapelusza
+                -opcja 3 - jakas randomowa imputacja, ale sporo modelu nam zepsuje
+    - air quality obserwacje były prowadzone co godzine, dlatego chcemy mieć time series każdej (pełnej) godziny od 2019 do 2023 roku z odpowiadajaca pogoda
+
+- PO OGARNIECIU CALEGO SYFU Z DANYCH POGODOWYCH:
+    -połączyć dane pogodowe z danymi o air quality
+    - (dodatkowe) znaleźć dodatkowe info o stacjach i dopisac je do modelu
+    - zaczac trenowac modele
+        - jeden duzy?
+        - osobny model dla kazdej stacji? - prawdopodobnie bedzie lepsze
