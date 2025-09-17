@@ -1,14 +1,17 @@
 WEATHER:
-- handling reszty compound fields
-    - najważniejsze - te w których jest najmniej missing values (np. MA1) + te, które wymienił w https://www.airppm.org/for-participants/training-sets
-    - czyli spróbujcie rozkminić MA1, GF1, GA1, GE1
-        -jak będziecie w gazie to może MD1, MW1 i GA2, ale mają sporo missing values, więc pewnie można je wywalić i nie stracimy na tym dużo
+    co zostalo zrobione:
+        -merge wszystkich plikow pogodowych (2019-2023) do jednego pliku
+        -wywalenie kolumn ktore z bomby mialy >80% missing values, kolumn ze stala wartoscia i kolumn bezuzytecznych
+        -rozbicie najwazniejszych kolumn pogodowych (WND, CIG, VIS, TMP, DEW, SLP) + encoding gdzie trzeba
+        -rozbicie mniejszych kolumn pogodowych (MA1, GA1, GA2, MD1, MW1)
+            -NOTE: GA1_type, GA2_type to kategorie, nie wartosci!
+        -wiekszosc z tych kolumn ma ponad 50% missing values, prawdopodobnie dla NN modeli bedzie trzeba je wywalic
 
 - WAŻNE!!!! - po ogarnięciu wszystkich kolumn
     - niektóre godziny mają parę reportów (FM-15 i FM-12)
         -końcowo będziemy wklejać tylko 1 report godzinowy, dlatego trzeba przygotować algorytm, który:
-            -sprawdza czy dla godziny jest dostępny raport pogodowy FM-15
-                -jeśli mamy ten raport to sprawdza czy brakujące pola można wziąć z raportu FM-12 (jeśli taki jest dla tej godziny)
+            -sprawdza czy dla godziny jest dostępny glowny (SPRAWDZCIE CZY FM-15 czy FM-12 ma mniej missing values) raport pogodowy
+                -jeśli mamy ten raport to sprawdza czy brakujące pola można wziąć z tego drugiego  (jeśli taki jest dla tej godziny)
                 -uzupełnia brakujące pola na podstawie tego drugiego raportu
             -co jeśli dla godziny nie ma raportu?
                 -opcja 1 - NaN, tree-based algorytmy sobie poradza, gorzej z NN i Prophetem
