@@ -3,7 +3,7 @@ import numpy as np
 from datetime import datetime
 
 # Read data from CSV file
-input_file = 'data/processed/weather_pre_algorithm.csv'
+input_file = '../data/processed/weather_pre_algorithm.csv'
 df = pd.read_csv(input_file)
 
 df['DATE'] = pd.to_datetime(df['DATE'])
@@ -16,7 +16,7 @@ print(f"Data after filtering (full hours only): {len(df_hourly)} rows")
 
 
 # Step 2: Group by hour (without considering REPORT_TYPE yet)
-df_hourly['hour'] = df_hourly['DATE'].dt.floor('H')
+df_hourly['hour'] = df_hourly['DATE'].dt.floor('h')
 
 # Step 3: Function to merge weather data
 def merge_weather_data(group):
@@ -60,6 +60,10 @@ def merge_weather_data(group):
                 merged_row[col] = non_null_values.iloc[0]
     
     return merged_row
+
+#Step 3.5 do interpolation to impute missing values of weather in the training set
+def impute_values():
+    pass
 
 # Step 4: Group by hour and merge data
 grouped = df_hourly.groupby('hour')
