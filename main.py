@@ -90,6 +90,11 @@ def predict_pm10(base_time, history, landuse_data, hours=24):
     - hours: number of hourly predictions to generate
     Returns a list of dictionaries with 'timestamp' and 'pm10_pred'.
     """
+
+    #3.robisz forecast_with_lag(case, model, 24*)
+
+
+
     forecast_list = []
     for h in range(hours):
         ts = (base_time + timedelta(hours=h)).strftime("%Y-%m-%dT%H:%MZ")

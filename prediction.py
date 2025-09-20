@@ -63,11 +63,19 @@ def forecast_with_lag(case, model, horizon=24):
             "weekday_cos": weekday_cos,
             "station_code": station["station_code"],
             "pm10_lag_1": pm10_lag_1,
-            "pm10_lag_2": pm10_lag_2,
+            "pm10_lag_2": pm10_lag_2
         }
 
         # TODO: Add weather preprocessing
         # row.update(preprocess_weather(weather_for_ts))
+        # z jsona robisz dataFrame -> dataFrame traktujesz weather_preprocessingiem (rozbija zlozone kolumny)
+        # po preprocessingu robisz approach >>>>>
+        # APPROACH (madrzejszy ale ciezszy) !!! MOZE SIE WYPIERDOLIC - 00-08 - imputujesz avg weather z nocy
+        # 9-16 - dzien i 17-23 - wieczor ------->> mega wypierdolka jak dostaniesz jedna godzine xdd
+        # if len(weather)
+        # merge weather z row (dane o time series)
+        #
+
 
         # --- Keep only columns that exist in the model ---
         X_new = pd.DataFrame([row])
