@@ -117,16 +117,27 @@ def preprocess_weather(df: pd.DataFrame) -> pd.DataFrame:
         df.loc[df["GA1_q3"] != "1", "GA1_type"] = np.nan
         df = df.drop(columns=["GA1", "GA1_q1", "GA1_q2", "GA1_q3"])
 
-    # --- MW1 ---
-    if "MW1" in df.columns:
-        mw1_parts = safe_split(df["MW1"], 2)
-        df["MW1_val"] = pd.to_numeric(mw1_parts[0], errors="coerce").replace([99, 999, 9999, 99999], np.nan)
-        df["MW1_q"] = mw1_parts[1]
 
-        df.loc[df["MW1_q"] != "1", "MW1_val"] = np.nan
-        df = df.drop(columns=["MW1", "MW1_q"])
+    # --- MD1 (NEW) ---
+    if "MD1" in df.columns:
+        md1_parts = safe_split(df["MD1"], 6)
+        df["MD1_m1"] = pd.to_numeric(md1_parts[0], errors="coerce")
+        df["MD1_q1"] = md1_parts[1]
+        df["MD1_m2"] = pd.to_numeric(md1_parts[2], errors="coerce")
+        df["MD1_q2"] = md1_parts[3]
 
-        # make sure all the weather columns exist
+        # Replace placeholder codes
+        df["MD1_m1"] = df["MD1_m1"].replace(999, np.nan)
+        df["MD1_m2"] = df["MD1_m2"].replace(999, np.nan)
+
+        # Keep only reliable measures
+        df.loc[df["MD1_q1"] != "1", "MD1_m1"] = np.nan
+        df.loc[df["MD1_q2"] != "1", "MD1_m2"] = np.nan
+
+        # Drop original + quality flags
+        df = df.drop(columns=["MD1", "MD1_q1", "MD1_q2"])
+
+    # make sure all the weather columns exist
     required_cols = [
         'DATE', 'wind_speed_raw',
        'wind_dir_sin', 'wind_dir_cos', 'ceiling_coverage', 'visibility_m',
@@ -144,7 +155,7 @@ def preprocess_weather(df: pd.DataFrame) -> pd.DataFrame:
 
     # --- Interpolate continuous columns ---
     cont_cols = ["temperature_C","DEW_C","wind_speed_raw","wind_dir_sin","wind_dir_cos",
-                 "SLP_hpa","visibility_m","MA1_main","MA1_sec","GA1_amt","GA1_height"]
+                 "SLP_hpa","visibility_m","MA1_main","MA1_sec","GA1_amt","GA1_height", "MD1_m1", "MD1_m2"]
     df[cont_cols] = df[cont_cols].interpolate(method="linear", limit_direction="both")
 
 

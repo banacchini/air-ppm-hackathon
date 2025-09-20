@@ -4,12 +4,12 @@
       "case_id": "test_001",
       "stations": [
         {
-          "station_code": "TEST_STN",
+          "station_code": "TEST_STN1",
           "longitude": -74.0060,
           "latitude": 40.7128,
           "history": [
-            {"timestamp": "2025-01-01T00:00:00", "pm10": 42.5},
-            {"timestamp": "2025-01-01T01:00:00", "pm10": 38.1}
+            {"timestamp": "2025-01-01T00:00:00", "pm10": 55.5},
+            {"timestamp": "2025-01-01T01:00:00", "pm10": 35.1}
           ]
         }
       ],
@@ -20,6 +20,56 @@
       },
       "weather": [
         {"date": "2025-01-03T00:00:00", "tmp": "+0050,1", "wnd": "260,1,N,0030,1"}
+      ]
+    },
+    {
+      "case_id": "test_002",
+      "stations": [
+        {
+          "station_code": "TEST_STN2",
+          "longitude": 21.0122,
+          "latitude": 52.2297,
+          "history": [
+            {"timestamp": "2025-01-02T12:00:00", "pm10": 12.0},
+            {"timestamp": "2025-01-02T13:00:00", "pm10": 14.5},
+            {"timestamp": "2025-01-02T14:00:00", "pm10": 20.0}
+          ]
+        }
+      ],
+      "target": {
+        "longitude": 21.0122,
+        "latitude": 52.2297,
+        "prediction_start_time": "2025-01-03T12:00:00"
+      },
+      "weather": [
+        {"date": "2025-01-03T12:00:00", "tmp": "-0020,1", "wnd": "180,1,N,0025,1"},
+        {"date": "2025-01-03T13:00:00", "tmp": "-0015,1", "wnd": "200,1,N,0030,1"}
+      ]
+    },
+    {
+      "case_id": "test_003",
+      "stations": [
+        {
+          "station_code": "TEST_STN3",
+          "longitude": 19.9445,
+          "latitude": 50.0647,
+          "history": [
+            {"timestamp": "2025-01-01T06:00:00", "pm10": 80.0},
+            {"timestamp": "2025-01-01T07:00:00", "pm10": 85.0},
+            {"timestamp": "2025-01-01T08:00:00", "pm10": 90.0},
+            {"timestamp": "2025-01-01T09:00:00", "pm10": 100.0}
+          ]
+        }
+      ],
+      "target": {
+        "longitude": 19.9445,
+        "latitude": 50.0647,
+        "prediction_start_time": "2025-01-02T06:00:00"
+      },
+      "weather": [
+        {"date": "2025-01-02T06:00:00", "tmp": "+0010,1", "wnd": "000,1,N,0010,1"},
+        {"date": "2025-01-02T07:00:00", "tmp": "+0012,1", "wnd": "045,1,N,0015,1"},
+        {"date": "2025-01-02T08:00:00", "tmp": "+0015,1", "wnd": "090,1,N,0020,1"}
       ]
     }
   ]
