@@ -4,6 +4,10 @@ import numpy as np
 
 cat_model = joblib.load("models/catboost_best_model.pkl")
 
+
+import pandas as pd
+import numpy as np
+
 def forecast_with_lag(case, model, horizon=24):
     """
     case: dict containing station info, history, target, weather
@@ -11,44 +15,40 @@ def forecast_with_lag(case, model, horizon=24):
     horizon: number of hours to forecast (default: 24)
     """
 
-    # Get station info
-    station = case["stations"][0]   # assuming one station for now
-    history = pd.DataFrame(station["history"])
+    # --- Validate station ---
+    if not case.get("stations") or "station_code" not in case["stations"][0]:
+        raise KeyError("Station info or station_code missing")
+    station = case["stations"][0]
+
+    # --- Validate history ---
+    history = pd.DataFrame(station.get("history", []))
+    if history.empty or "timestamp" not in history or "pm10" not in history:
+        raise IndexError("History is missing or invalid")
+    if len(history) < 2:
+        raise IndexError("Not enough history points for lag features")
     history["timestamp"] = pd.to_datetime(history["timestamp"])
 
     # Start from the last known PM10
     pm10_lag_1 = history["pm10"].iloc[-1]
     pm10_lag_2 = history["pm10"].iloc[-2]
 
-    # Build the forecast rows
+    # --- Validate target ---
+    if "prediction_start_time" not in case.get("target", {}):
+        raise KeyError("prediction_start_time missing")
     start_time = pd.to_datetime(case["target"]["prediction_start_time"])
+
     forecast_rows = []
 
     for i in range(horizon):
         ts = start_time + pd.Timedelta(hours=i)
-        year = ts.year
-        month = ts.month
-        day = ts.day
-        weekday = ts.weekday  # Monday=0
-        hour = ts.hour
-        day_of_year = ts.dayofyear
+        year, month, day, hour = ts.year, ts.month, ts.day, ts.hour
+        weekday, day_of_year = ts.weekday(), ts.dayofyear
 
-        # Cyclic encoding for hour (24h cycle)
-        hour_sin = np.sin(2 * np.pi * hour / 24)
-        hour_cos = np.cos(2 * np.pi * hour / 24)
+        # Cyclic encoding
+        hour_sin, hour_cos = np.sin(2*np.pi*hour/24), np.cos(2*np.pi*hour/24)
+        doy_sin, doy_cos = np.sin(2*np.pi*day_of_year/365.25), np.cos(2*np.pi*day_of_year/365.25)
+        weekday_sin, weekday_cos = np.sin(2*np.pi*weekday/7), np.cos(2*np.pi*weekday/7)
 
-        # Cyclic encoding for day of year (seasonality)
-        doy_sin = np.sin(2 * np.pi * day_of_year / 365.25)
-        doy_cos = np.cos(2 * np.pi * day_of_year / 365.25)
-
-        # Optional: encode weekday cyclically
-        weekday_sin = np.sin(2 * np.pi * weekday / 7)
-        weekday_cos = np.cos(2 * np.pi * weekday / 7)
-
-        columns = ['year', 'month', 'day', 'hour', 'hour_sin', 'hour_cos', 'doy_sin',
-         'doy_cos', 'weekday_sin', 'weekday_cos', 'station_code']
-
-        # --- Build input row ---
         row = {
             "DATE": ts,
             "year": year,
@@ -62,21 +62,21 @@ def forecast_with_lag(case, model, horizon=24):
             "weekday_sin": weekday_sin,
             "weekday_cos": weekday_cos,
             "station_code": station["station_code"],
-            # use last known pm10 as lag
             "pm10_lag_1": pm10_lag_1,
             "pm10_lag_2": pm10_lag_2,
         }
 
+        # TODO: Add weather preprocessing
+        # row.update(preprocess_weather(weather_for_ts))
 
-        # TODO: Add weather preprocessing here if available
-        # e.g. row.update(preprocess_weather(weather_for_ts))
-
+        # --- Keep only columns that exist in the model ---
         X_new = pd.DataFrame([row])
-        X_new = X_new.reindex(columns=model.feature_names_)
+        X_new = X_new[[col for col in model.feature_names_ if col in X_new.columns]]
 
         # --- Predict ---
         y_pred = model.predict(X_new)[0]
 
+        # Update lags
         pm10_lag_2 = pm10_lag_1
         pm10_lag_1 = y_pred
 
@@ -85,10 +85,10 @@ def forecast_with_lag(case, model, horizon=24):
             "pm10_pred": float(y_pred)
         })
 
-
     return {
         "case_id": case["case_id"],
         "forecast": forecast_rows
     }
+
 
 print(cat_model.feature_names_)
