@@ -9,9 +9,10 @@ cat_model = joblib.load("models/catboost_best_model.pkl")
 
 def find_weather_for_timestamp(weather_df, target_timestamp):
     """
-    Find weather for given timestamp:
-    - Nearest neighbor if there's only one
-    - Average of two if they are equidistant
+    Find weather for given timestamp with priority on same hour from different days:
+    1. Same hour from nearest days (priority)
+    2. Nearest hour if no same hour available  
+    3. Average if multiple measurements at same hour
     """
     if weather_df.empty:
         return {}
@@ -21,26 +22,58 @@ def find_weather_for_timestamp(weather_df, target_timestamp):
     weather_df['DATE'] = pd.to_datetime(weather_df['DATE'])
     target_timestamp = pd.to_datetime(target_timestamp)
     
-    # Calculate time differences (in seconds)
+    target_hour = target_timestamp.hour
+    
+    # Step 1: Try to find same hour from different days
+    same_hour_mask = weather_df['DATE'].dt.hour == target_hour
+    same_hour_data = weather_df[same_hour_mask]
+    
+    if not same_hour_data.empty:
+        # Found weather data at the same hour - prioritize by date proximity
+        target_date = target_timestamp.date()
+        date_diffs = same_hour_data['DATE'].dt.date.apply(lambda x: abs((x - target_date).days))
+        min_date_diff = date_diffs.min()
+        
+        # Get all measurements from the closest date(s) with same hour
+        closest_same_hour = same_hour_data[date_diffs == min_date_diff]
+        
+        if len(closest_same_hour) == 1:
+            # One measurement at same hour from closest date
+            result = closest_same_hour.iloc[0].to_dict()
+            result.pop('DATE', None)
+            return result
+        else:
+            # Multiple measurements at same hour - average them
+            numeric_cols = closest_same_hour.select_dtypes(include=[np.number]).columns
+            result = {}
+            
+            for col in numeric_cols:
+                if col != 'DATE':
+                    result[col] = closest_same_hour[col].mean()
+            
+            # For categorical - take first value
+            categorical_cols = closest_same_hour.select_dtypes(exclude=[np.number, 'datetime']).columns
+            for col in categorical_cols:
+                if col != 'DATE':
+                    result[col] = closest_same_hour[col].iloc[0]
+                    
+            return result
+    
+    # Step 2: No same hour found - fall back to nearest timestamp (old logic)
     time_diffs = np.abs((weather_df['DATE'] - target_timestamp).dt.total_seconds())
-    
-    # Find minimum difference
     min_diff = time_diffs.min()
-    
-    # Find all indices with minimum difference
     closest_indices = np.where(time_diffs == min_diff)[0]
     
     if len(closest_indices) == 1:
-        # One nearest - return it
+        # One nearest timestamp
         closest_row = weather_df.iloc[closest_indices[0]]
         result = closest_row.to_dict()
-        result.pop('DATE', None)  # Remove DATE column
+        result.pop('DATE', None)
         return result
     else:
-        # Multiple equidistant - calculate average
+        # Multiple equidistant timestamps - average them
         closest_rows = weather_df.iloc[closest_indices]
         
-        # Average for numeric columns
         numeric_cols = closest_rows.select_dtypes(include=[np.number]).columns
         result = {}
         
@@ -48,7 +81,6 @@ def find_weather_for_timestamp(weather_df, target_timestamp):
             if col != 'DATE':
                 result[col] = closest_rows[col].mean()
         
-        # For categorical - take first value
         categorical_cols = closest_rows.select_dtypes(exclude=[np.number, 'datetime']).columns
         for col in categorical_cols:
             if col != 'DATE':
