@@ -1,12 +1,60 @@
 import joblib
 import pandas as pd
 import numpy as np
+from weather_preprocessing import preprocess_weather
 
 cat_model = joblib.load("models/catboost_best_model.pkl")
 
 
-import pandas as pd
-import numpy as np
+
+def find_weather_for_timestamp(weather_df, target_timestamp):
+    """
+    Find weather for given timestamp:
+    - Nearest neighbor if there's only one
+    - Average of two if they are equidistant
+    """
+    if weather_df.empty:
+        return {}
+    
+    # Convert to datetime if not already
+    weather_df = weather_df.copy()
+    weather_df['DATE'] = pd.to_datetime(weather_df['DATE'])
+    target_timestamp = pd.to_datetime(target_timestamp)
+    
+    # Calculate time differences (in seconds)
+    time_diffs = np.abs((weather_df['DATE'] - target_timestamp).dt.total_seconds())
+    
+    # Find minimum difference
+    min_diff = time_diffs.min()
+    
+    # Find all indices with minimum difference
+    closest_indices = np.where(time_diffs == min_diff)[0]
+    
+    if len(closest_indices) == 1:
+        # One nearest - return it
+        closest_row = weather_df.iloc[closest_indices[0]]
+        result = closest_row.to_dict()
+        result.pop('DATE', None)  # Remove DATE column
+        return result
+    else:
+        # Multiple equidistant - calculate average
+        closest_rows = weather_df.iloc[closest_indices]
+        
+        # Average for numeric columns
+        numeric_cols = closest_rows.select_dtypes(include=[np.number]).columns
+        result = {}
+        
+        for col in numeric_cols:
+            if col != 'DATE':
+                result[col] = closest_rows[col].mean()
+        
+        # For categorical - take first value
+        categorical_cols = closest_rows.select_dtypes(exclude=[np.number, 'datetime']).columns
+        for col in categorical_cols:
+            if col != 'DATE':
+                result[col] = closest_rows[col].iloc[0]
+                
+        return result
 
 def forecast_with_lag(case, model, horizon=24):
     """
@@ -67,14 +115,25 @@ def forecast_with_lag(case, model, horizon=24):
         }
 
         # TODO: Add weather preprocessing
-        # row.update(preprocess_weather(weather_for_ts))
-        # z jsona robisz dataFrame -> dataFrame traktujesz weather_preprocessingiem (rozbija zlozone kolumny)
-        # po preprocessingu robisz approach >>>>>
-        # APPROACH (madrzejszy ale ciezszy) !!! MOZE SIE WYPIERDOLIC - 00-08 - imputujesz avg weather z nocy
-        # 9-16 - dzien i 17-23 - wieczor ------->> mega wypierdolka jak dostaniesz jedna godzine xdd
-        # if len(weather)
-        # merge weather z row (dane o time series)
-        #
+        weather_data = case.get("weather", [])
+        weather_features = {}
+
+        if weather_data:
+            try:
+                # Convert to DataFrame
+                weather_df = pd.DataFrame(weather_data)
+                weather_df.rename(columns={"date": "DATE"}, inplace=True)
+                
+                # Preprocess weather data
+                weather_processed = preprocess_weather(weather_df)
+                
+                # Find weather for current timestamp
+                weather_features = find_weather_for_timestamp(weather_processed, ts)
+                
+            except Exception as e:
+                print(f"Warning: Weather preprocessing failed for {ts}: {e}")
+
+        row.update(weather_features)
 
 
         # --- Keep only columns that exist in the model ---

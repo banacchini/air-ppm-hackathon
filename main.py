@@ -44,6 +44,7 @@ import json      # For reading and writing JSON files
 import random    # For generating random numbers (placeholder for real predictions)
 from datetime import datetime, timedelta  # For handling dates and times
 import osmium    # For reading OpenStreetMap .pbf files
+from prediction import forecast_with_lag, cat_model
 
 
 class LanduseHandler(osmium.SimpleHandler):
@@ -155,12 +156,15 @@ def generate_output(data, landuse_data=None, forecast_hours=24):
             print(f"  [INFO] Station {station_code}: {len(history)} history points")
 
         # Call the separate prediction function
-        forecast_list = predict_pm10(
-            base_time=base_forecast_start,
-            history=all_history,
-            landuse_data=landuse_data,
-            hours=forecast_hours
-        )
+        # forecast_list = predict_pm10(
+        #     base_time=base_forecast_start,
+        #     history=all_history,
+        #     landuse_data=landuse_data,
+        #     hours=forecast_hours
+        # )
+
+        forecast_result = forecast_with_lag(case, cat_model, forecast_hours)
+        forecast_list = forecast_result["forecast"]
 
         predictions.append({
             "case_id": case_id,

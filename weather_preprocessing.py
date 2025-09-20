@@ -1,5 +1,7 @@
 import pandas as pd
 import numpy as np
+import warnings
+warnings.filterwarnings('ignore', category=FutureWarning)
 
 def safe_split(series: pd.Series, n_parts: int):
     """Safely split a Series of strings into exactly n_parts columns."""
